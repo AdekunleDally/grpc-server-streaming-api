@@ -4,8 +4,8 @@ package primefactorcalculator ;
 
 option go_package = "github.com/AdekunleDally/grpc-server-streaming-api/primefactorcalculator/proto" ;
 
-message NumberRequest {
-    int64 input_number = 1;
+message NumberRequest {  
+    int64 input_number = 1;   
 }
 
 message PrimeFactorResponse {
