@@ -1,4 +1,4 @@
-# Prime FactorCalculator Service
+# Prime Factor Calculator Service
 
 This application provides a calculator service by using a gRPC server streaming API which takes an input from a user and returns the prime factor(s) of that number.Through the use of gRPC protocolbuffer, it defines and takes a message request and returns a stream of Responses that represent the prime number decomposition of that number.
 ## Setup
