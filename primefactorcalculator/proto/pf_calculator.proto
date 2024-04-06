@@ -1,6 +1,6 @@
 syntax = "proto3" ;
 
-package primefactorcalculator ;
+package primefactorcalculator ;  
 
 option go_package = "github.com/AdekunleDally/grpc-server-streaming-api/primefactorcalculator/proto" ;
 
@@ -13,5 +13,5 @@ message PrimeFactorResponse {
 }
 
 service PrimeFactorService{
-    rpc PrimeFactorCalc(NumberRequest) returns (PrimeFactorResponse);
+    rpc PrimeFactorCalc(NumberRequest) returns (stream PrimeFactorResponse); 
 }

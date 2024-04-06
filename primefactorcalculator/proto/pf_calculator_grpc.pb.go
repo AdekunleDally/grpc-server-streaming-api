@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PrimeFactorServiceClient interface {
-	PrimeFactorCalc(ctx context.Context, in *NumberRequest, opts ...grpc.CallOption) (*PrimeFactorResponse, error)
+	PrimeFactorCalc(ctx context.Context, in *NumberRequest, opts ...grpc.CallOption) (PrimeFactorService_PrimeFactorCalcClient, error)
 }
 
 type primeFactorServiceClient struct {
@@ -33,20 +33,43 @@ func NewPrimeFactorServiceClient(cc grpc.ClientConnInterface) PrimeFactorService
 	return &primeFactorServiceClient{cc}
 }
 
-func (c *primeFactorServiceClient) PrimeFactorCalc(ctx context.Context, in *NumberRequest, opts ...grpc.CallOption) (*PrimeFactorResponse, error) {
-	out := new(PrimeFactorResponse)
-	err := c.cc.Invoke(ctx, "/primefactorcalculator.PrimeFactorService/PrimeFactorCalc", in, out, opts...)
+func (c *primeFactorServiceClient) PrimeFactorCalc(ctx context.Context, in *NumberRequest, opts ...grpc.CallOption) (PrimeFactorService_PrimeFactorCalcClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PrimeFactorService_ServiceDesc.Streams[0], "/primefactorcalculator.PrimeFactorService/PrimeFactorCalc", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &primeFactorServicePrimeFactorCalcClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type PrimeFactorService_PrimeFactorCalcClient interface {
+	Recv() (*PrimeFactorResponse, error)
+	grpc.ClientStream
+}
+
+type primeFactorServicePrimeFactorCalcClient struct {
+	grpc.ClientStream
+}
+
+func (x *primeFactorServicePrimeFactorCalcClient) Recv() (*PrimeFactorResponse, error) {
+	m := new(PrimeFactorResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // PrimeFactorServiceServer is the server API for PrimeFactorService service.
 // All implementations must embed UnimplementedPrimeFactorServiceServer
 // for forward compatibility
 type PrimeFactorServiceServer interface {
-	PrimeFactorCalc(context.Context, *NumberRequest) (*PrimeFactorResponse, error)
+	PrimeFactorCalc(*NumberRequest, PrimeFactorService_PrimeFactorCalcServer) error
 	mustEmbedUnimplementedPrimeFactorServiceServer()
 }
 
@@ -54,8 +77,8 @@ type PrimeFactorServiceServer interface {
 type UnimplementedPrimeFactorServiceServer struct {
 }
 
-func (UnimplementedPrimeFactorServiceServer) PrimeFactorCalc(context.Context, *NumberRequest) (*PrimeFactorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PrimeFactorCalc not implemented")
+func (UnimplementedPrimeFactorServiceServer) PrimeFactorCalc(*NumberRequest, PrimeFactorService_PrimeFactorCalcServer) error {
+	return status.Errorf(codes.Unimplemented, "method PrimeFactorCalc not implemented")
 }
 func (UnimplementedPrimeFactorServiceServer) mustEmbedUnimplementedPrimeFactorServiceServer() {}
 
@@ -70,22 +93,25 @@ func RegisterPrimeFactorServiceServer(s grpc.ServiceRegistrar, srv PrimeFactorSe
 	s.RegisterService(&PrimeFactorService_ServiceDesc, srv)
 }
 
-func _PrimeFactorService_PrimeFactorCalc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NumberRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _PrimeFactorService_PrimeFactorCalc_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(NumberRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(PrimeFactorServiceServer).PrimeFactorCalc(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/primefactorcalculator.PrimeFactorService/PrimeFactorCalc",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrimeFactorServiceServer).PrimeFactorCalc(ctx, req.(*NumberRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(PrimeFactorServiceServer).PrimeFactorCalc(m, &primeFactorServicePrimeFactorCalcServer{stream})
+}
+
+type PrimeFactorService_PrimeFactorCalcServer interface {
+	Send(*PrimeFactorResponse) error
+	grpc.ServerStream
+}
+
+type primeFactorServicePrimeFactorCalcServer struct {
+	grpc.ServerStream
+}
+
+func (x *primeFactorServicePrimeFactorCalcServer) Send(m *PrimeFactorResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // PrimeFactorService_ServiceDesc is the grpc.ServiceDesc for PrimeFactorService service.
@@ -94,12 +120,13 @@ func _PrimeFactorService_PrimeFactorCalc_Handler(srv interface{}, ctx context.Co
 var PrimeFactorService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "primefactorcalculator.PrimeFactorService",
 	HandlerType: (*PrimeFactorServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "PrimeFactorCalc",
-			Handler:    _PrimeFactorService_PrimeFactorCalc_Handler,
+			StreamName:    "PrimeFactorCalc",
+			Handler:       _PrimeFactorService_PrimeFactorCalc_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "pf_calculator.proto",
 }
